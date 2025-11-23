@@ -98,7 +98,7 @@ async function apiRequest<T>(
  */
 export async function login(credentials: LoginCredentials): Promise<{ user: User; token: string }> {
   try {
-    const response = await apiRequest<LoginResponse>('/auth/login', {
+    const response = await apiRequest<LoginResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -130,7 +130,7 @@ export async function login(credentials: LoginCredentials): Promise<{ user: User
  */
 export async function logout(): Promise<void> {
   try {
-    await apiRequest('/auth/logout', {
+    await apiRequest('/api/auth/logout', {
       method: 'POST',
     });
   } catch (error) {
@@ -146,7 +146,7 @@ export async function logout(): Promise<void> {
  */
 export async function refreshToken(): Promise<string> {
   try {
-    const response = await apiRequest<{ data: { token: string } }>('/auth/refresh', {
+    const response = await apiRequest<{ data: { token: string } }>('/api/auth/refresh', {
       method: 'POST',
     });
 
@@ -164,7 +164,7 @@ export async function refreshToken(): Promise<string> {
  */
 export async function getMe(): Promise<User> {
   try {
-    const response = await apiRequest<{ data: { user: User } }>('/users/me');
+    const response = await apiRequest<{ data: { user: User } }>('/api/users/me');
     await setUser(response.data.user);
     return response.data.user;
   } catch (error) {
