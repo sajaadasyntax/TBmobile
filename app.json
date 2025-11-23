@@ -60,10 +60,7 @@
         "origin": false
       },
       "apiUrl": "https://api.trustbuild.uk",
-      "webUrl": "https://trustbuild.uk",
-      "eas": {
-        "projectId": "aefe1528-3bf7-44d3-938a-6168ba54941d"
-      }
+      "webUrl": "https://trustbuild.uk"
     }
   }
 }
