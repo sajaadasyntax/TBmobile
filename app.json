@@ -60,7 +60,11 @@
         "origin": false
       },
       "apiUrl": "https://api.trustbuild.uk",
-      "webUrl": "https://trustbuild.uk"
-    }
+      "webUrl": "https://trustbuild.uk",
+      "eas": {
+        "projectId": "6ff5ca9e-4725-4ec9-9820-eb762c5f541d"
+      }
+    },
+    "owner": "sajaadammar"
   }
 }
