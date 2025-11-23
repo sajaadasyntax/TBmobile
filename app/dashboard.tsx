@@ -45,6 +45,19 @@ export default function DashboardScreen() {
         return;
       }
 
+      // Verify user is a contractor
+      if (userData.role !== 'CONTRACTOR') {
+        Alert.alert(
+          'Access Denied',
+          'This app is only available for contractors. Please use the web app.',
+          [{ text: 'OK', onPress: async () => {
+            await clearAuth();
+            router.replace('/');
+          }}]
+        );
+        return;
+      }
+
       setTokenState(authToken);
       setUserState(userData);
       setLoading(false);
@@ -192,15 +205,24 @@ export default function DashboardScreen() {
             />
           ) : undefined
         }
-        // Handle external links
+        // Handle external links and ensure only contractor routes
         onShouldStartLoadWithRequest={(request) => {
-          // Allow internal TrustBuild URLs
-          if (shouldHandleInWebView(request.url)) {
-            return true;
+          const url = request.url.toLowerCase();
+          
+          // Block external URLs
+          if (!shouldHandleInWebView(request.url)) {
+            return false;
           }
           
-          // External links - could open in browser
-          // For now, allow them in WebView
+          // Block customer/admin routes - only allow contractor routes
+          if (url.includes('/dashboard/customer') || 
+              url.includes('/dashboard/admin') ||
+              url.includes('/admin')) {
+            // Block navigation to non-contractor routes
+            return false;
+          }
+          
+          // Allow contractor routes, KYC, and other approved internal routes
           return true;
         }}
       />

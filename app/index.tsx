@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { login, getErrorMessage } from '../src/services/api';
-import { isAuthenticated } from '../src/services/storage';
+import { isAuthenticated, getUser, clearAuth } from '../src/services/storage';
 import LoadingScreen from '../src/components/LoadingScreen';
 
 export default function LoginScreen() {
@@ -30,10 +30,19 @@ export default function LoginScreen() {
     try {
       const isAuth = await isAuthenticated();
       if (isAuth) {
-        router.replace('/dashboard');
+        // Double-check user is contractor before redirecting
+        const user = await getUser();
+        if (user && user.role === 'CONTRACTOR') {
+          router.replace('/dashboard');
+        } else {
+          // Not a contractor - clear auth and show login
+          await clearAuth();
+        }
       }
     } catch (error) {
       console.error('Error checking auth:', error);
+      // On error, clear auth to be safe
+      await clearAuth();
     } finally {
       setInitializing(false);
     }

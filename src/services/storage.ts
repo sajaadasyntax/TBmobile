@@ -125,10 +125,28 @@ export async function clearAuth(): Promise<void> {
 }
 
 /**
- * Check if user is authenticated
+ * Check if user is authenticated and is a contractor
  */
 export async function isAuthenticated(): Promise<boolean> {
   const token = await getToken();
-  return token !== null;
+  if (!token) {
+    return false;
+  }
+  
+  // Verify user is a contractor
+  const user = await getUser();
+  if (!user || user.role !== 'CONTRACTOR') {
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Check if user is a contractor
+ */
+export async function isContractor(): Promise<boolean> {
+  const user = await getUser();
+  return user?.role === 'CONTRACTOR';
 }
 
