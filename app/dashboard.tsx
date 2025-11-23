@@ -26,12 +26,27 @@ export default function DashboardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [webViewLoading, setWebViewLoading] = useState(true);
+  const [dashboardUrl, setDashboardUrl] = useState<string>('');
   const { isOnline } = useNetworkStatus();
 
   useEffect(() => {
     loadAuthData();
     setupBackHandler();
-  }, []);
+    
+    // Timeout for WebView loading - if it takes too long, show error
+    const loadingTimeout = setTimeout(() => {
+      if (webViewLoading) {
+        console.warn('WebView loading timeout');
+        setWebViewLoading(false);
+        setError('Dashboard is taking too long to load. Please check your internet connection and try again.');
+      }
+    }, 30000); // 30 second timeout
+    
+    return () => {
+      clearTimeout(loadingTimeout);
+    };
+  }, [webViewLoading]);
 
   async function loadAuthData() {
     try {
@@ -60,6 +75,12 @@ export default function DashboardScreen() {
 
       setTokenState(authToken);
       setUserState(userData);
+      
+      // Set dashboard URL
+      const url = getDashboardUrl();
+      console.log('Loading dashboard URL:', url);
+      setDashboardUrl(url);
+      
       setLoading(false);
     } catch (err) {
       setError('Failed to load authentication data');
@@ -137,14 +158,32 @@ export default function DashboardScreen() {
     return <ErrorScreen message="Authentication required" />;
   }
 
+  if (!dashboardUrl) {
+    return <LoadingScreen message="Preparing dashboard..." />;
+  }
+
   // JavaScript to inject token into WebView
+  // Escape the token and user data properly for JavaScript
+  const escapedToken = token.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+  const escapedUser = JSON.stringify(user)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"');
+  
   const injectedJavaScript = `
     (function() {
       try {
-        localStorage.setItem('token', '${token}');
-        localStorage.setItem('user', '${JSON.stringify(user).replace(/'/g, "\\'")}');
+        console.log('Injecting token into WebView...');
+        localStorage.setItem('token', '${escapedToken}');
+        localStorage.setItem('user', '${escapedUser}');
+        console.log('Token injected successfully');
         window.ReactNativeWebView.postMessage('TOKEN_SET');
+        
+        // Also set in sessionStorage as backup
+        sessionStorage.setItem('token', '${escapedToken}');
+        sessionStorage.setItem('user', '${escapedUser}');
       } catch (e) {
+        console.error('Token injection error:', e);
         window.ReactNativeWebView.postMessage('TOKEN_ERROR: ' + e.message);
       }
     })();
@@ -154,12 +193,29 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <OfflineNotice />
+      {webViewLoading && (
+        <View style={styles.loadingOverlay}>
+          <LoadingScreen message="Loading dashboard..." />
+        </View>
+      )}
       <WebView
         ref={webViewRef}
-        source={{ uri: getDashboardUrl() }}
+        source={{ uri: dashboardUrl }}
         style={styles.webview}
         injectedJavaScript={injectedJavaScript}
+        onLoadStart={() => {
+          console.log('WebView load started');
+          setWebViewLoading(true);
+        }}
+        onLoadEnd={() => {
+          console.log('WebView load ended');
+          setWebViewLoading(false);
+        }}
+        onLoadProgress={({ nativeEvent }) => {
+          console.log('WebView load progress:', nativeEvent.progress);
+        }}
         onNavigationStateChange={(navState) => {
+          console.log('Navigation state changed:', navState.url);
           setCanGoBack(navState.canGoBack);
         }}
         onMessage={(event) => {
@@ -173,11 +229,14 @@ export default function DashboardScreen() {
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
           console.error('WebView error:', nativeEvent);
-          setError('Failed to load dashboard. Please check your internet connection.');
+          setWebViewLoading(false);
+          setError(`Failed to load dashboard: ${nativeEvent.description || 'Unknown error'}. URL: ${dashboardUrl}`);
         }}
         onHttpError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          console.error('HTTP error:', nativeEvent.statusCode);
+          console.error('HTTP error:', nativeEvent.statusCode, nativeEvent.url);
+          setWebViewLoading(false);
+          
           if (nativeEvent.statusCode === 401) {
             Alert.alert(
               'Session Expired',
@@ -187,6 +246,10 @@ export default function DashboardScreen() {
                 router.replace('/');
               }}]
             );
+          } else if (nativeEvent.statusCode === 404) {
+            setError(`Page not found (404). Please check if the dashboard URL is correct: ${dashboardUrl}`);
+          } else {
+            setError(`HTTP error ${nativeEvent.statusCode}. Please check your internet connection.`);
           }
         }}
         setSupportMultipleWindows={false}
@@ -196,6 +259,19 @@ export default function DashboardScreen() {
         domStorageEnabled={true}
         startInLoadingState={true}
         scalesPageToFit={true}
+        renderLoading={() => (
+          <View style={styles.loadingOverlay}>
+            <LoadingScreen message="Loading dashboard..." />
+          </View>
+        )}
+        renderError={(errorName) => (
+          <View style={styles.errorOverlay}>
+            <ErrorScreen 
+              message={`Failed to load dashboard: ${errorName}. URL: ${dashboardUrl}`} 
+              onRetry={handleRetry} 
+            />
+          </View>
+        )}
         // Pull to refresh (Android only by default)
         refreshControl={
           Platform.OS === 'android' ? (
@@ -237,6 +313,25 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ffffff',
+    zIndex: 1,
+  },
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ffffff',
+    zIndex: 2,
   },
 });
 
