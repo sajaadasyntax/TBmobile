@@ -6,18 +6,21 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "npmInstallArgs": ["--legacy-peer-deps"],
       "ios": {
         "simulator": true
       }
     },
     "preview": {
       "distribution": "internal",
+      "npmInstallArgs": ["--legacy-peer-deps"],
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
       "autoIncrement": true,
+      "npmInstallArgs": ["--legacy-peer-deps"],
       "android": {
         "buildType": "apk"
       }
