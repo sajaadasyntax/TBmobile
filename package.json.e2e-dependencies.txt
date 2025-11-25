@@ -1,0 +1,5 @@
+# E2E Testing dependencies for mobile app
+# Install with: npm install --save-dev
+
+detox@^20.13.0
+

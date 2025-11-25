@@ -78,7 +78,10 @@ export default function DashboardScreen() {
       
       // Set dashboard URL
       const url = getDashboardUrl();
-      console.log('Loading dashboard URL:', url);
+      console.log('✅ Dashboard configured:');
+      console.log('  - URL:', url);
+      console.log('  - User:', userData.name, `(${userData.role})`);
+      console.log('  - Token length:', authToken.length);
       setDashboardUrl(url);
       
       setLoading(false);

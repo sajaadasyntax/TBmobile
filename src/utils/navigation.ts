@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
+import { config } from '../../config';
 
-// Get web URL from config
-const WEB_URL = Constants.expoConfig?.extra?.webUrl || 'https://trustbuild.uk';
+// Get web URL from config (prioritize expo config, then local config file)
+const WEB_URL = Constants.expoConfig?.extra?.webUrl || config.webUrl;
 
 /**
  * Get the full URL for a dashboard route

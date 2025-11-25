@@ -1,8 +1,11 @@
 import Constants from 'expo-constants';
 import { getToken, setToken, setRefreshToken, setUser, clearAuth } from './storage';
+import { config } from '../../config';
 
-// Get API URL from config
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://api.trustbuild.uk';
+// Get API URL from config (prioritize expo config, then local config file)
+const API_URL = Constants.expoConfig?.extra?.apiUrl || config.apiUrl;
+
+console.log('Mobile API URL configured:', API_URL);
 
 // Types matching the backend
 export interface User {

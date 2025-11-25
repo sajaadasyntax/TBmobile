@@ -1,0 +1,7 @@
+# Additional testing dependencies needed for mobile (React Native/Expo)
+# Install with: npm install --save-dev
+
+jest-expo@~51.0.0
+@testing-library/react-native@^12.4.0
+@testing-library/jest-native@^5.4.3
+
